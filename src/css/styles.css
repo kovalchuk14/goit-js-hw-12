@@ -163,3 +163,8 @@ button {
   display: none;
   margin-top: 32px;
 }
+
+.gallery-img {
+  width: 100%;
+  height: 350px;
+}
