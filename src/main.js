@@ -40,43 +40,47 @@ async function submitForm(event) {
 
 button.addEventListener("click", addElements);
 
-function addElements() {
+async function addElements() {
     hideLoadMoreButton();
     showLoader();
-    getImagesByQuery(line, page)
-        .then(response => {
-            if (response.length == 0) {
-                iziToast.error({
-                    title: 'Error',
-                    message: 'Sorry, there are no images matching your search query. Please try again!',
-                });
-            } else {
-                page++;
 
-                createGallery(response);
-                if (page < totalPage) {
-                    showLoadMoreButton();
-                } else {
-                    iziToast.show({
-                        title: 'END',
-                        message: "We're sorry, but you've reached the end of search results.",
-                    });
-                }
+    try {
+        const response = await getImagesByQuery(line, page);
 
-            }
-        })
-        .catch(error =>
+        if (!response || response.length === 0) {
             iziToast.error({
                 title: 'Error',
-                message: `${error}`,
-            })
-        )
-        .finally(() => {
-            hideLoader();
-            window.scrollBy(0, (document.querySelector(".gallery li:first-child").getBoundingClientRect().height) * 2);
+                message: 'Sorry, there are no images matching your search query. Please try again!',
+            });
+            return;
+        }
+
+        page++;
+        createGallery(response);
+
+        if (page < totalPage) {
+            showLoadMoreButton();
+        } else {
+            iziToast.show({
+                title: 'END',
+                message: "We're sorry, but you've reached the end of search results.",
+            });
+        }
+
+        const firstItem = document.querySelector(".gallery li:first-child");
+        if (firstItem) {
+            window.scrollBy({
+                top: firstItem.getBoundingClientRect().height * 2,
+                behavior: "smooth",
+            });
+        }
+
+    } catch (error) {
+        iziToast.error({
+            title: 'Error',
+            message: `${error.message || error}`,
         });
-
-
+    } finally {
+        hideLoader();
+    }
 }
-
-
