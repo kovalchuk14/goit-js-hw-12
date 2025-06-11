@@ -1,5 +1,5 @@
 import { createGallery, clearGallery, showLoader, hideLoader, showLoadMoreButton, hideLoadMoreButton } from "./js/render-functions";
-import { getImagesByQuery, getHitsCount } from "./js/pixabay-api";
+import { getImagesByQuery } from "./js/pixabay-api";
 import iziToast from "izitoast";
 import "izitoast/dist/css/iziToast.min.css";
 
@@ -29,11 +29,9 @@ async function submitForm(event) {
     }
     line = value;
     page = 1;
-    totalPage = await getHitsCount(line);
+    totalPage = 1;
 
     clearGallery();
-    showLoader();
-    hideLoadMoreButton();
 
     addElements();
 }
@@ -45,9 +43,9 @@ async function addElements() {
     showLoader();
 
     try {
-        const response = await getImagesByQuery(line, page);
+        const { hits, totalHits } = await getImagesByQuery(line, page);
 
-        if (!response || response.length === 0) {
+        if (!hits.length) {
             iziToast.error({
                 title: 'Error',
                 message: 'Sorry, there are no images matching your search query. Please try again!',
@@ -55,8 +53,8 @@ async function addElements() {
             return;
         }
 
-        page++;
-        createGallery(response);
+        totalPage = Math.ceil(totalHits / 15);
+        createGallery(hits);
 
         if (page < totalPage) {
             showLoadMoreButton();
@@ -66,6 +64,7 @@ async function addElements() {
                 message: "We're sorry, but you've reached the end of search results.",
             });
         }
+        page++;
 
         const firstItem = document.querySelector(".gallery li:first-child");
         if (firstItem) {
